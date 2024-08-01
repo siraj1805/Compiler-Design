@@ -1,0 +1,90 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
+#define MAX 100
+
+char input[MAX];
+int i = 0;
+char currentChar;
+
+void nextChar() {
+    currentChar = input[i++];
+}
+
+void error() {
+    printf("Error: Invalid syntax.\n");
+    exit(1);
+}
+
+// Forward declarations for recursive functions
+void E();
+void E_prime();
+void T();
+void T_prime();
+void F();
+
+void E() {
+    // E -> TE'
+    T();
+    E_prime();
+}
+
+void E_prime() {
+    // E' -> +TE' | ε
+    if (currentChar == '+') {
+        nextChar();
+        T();
+        E_prime();
+    }
+    // ε is implicitly handled by doing nothing
+}
+
+void T() {
+    // T -> FT'
+    F();
+    T_prime();
+}
+
+void T_prime() {
+    // T' -> *FT' | ε
+    if (currentChar == '*') {
+        nextChar();
+        F();
+        T_prime();
+    }
+    // ε is implicitly handled by doing nothing
+}
+
+void F() {
+    // F -> (E) | id
+    if (currentChar == '(') {
+        nextChar();
+        E();
+        if (currentChar == ')') {
+            nextChar();
+        } else {
+            error();
+        }
+    } else if (isalnum(currentChar)) {
+        while (isalnum(currentChar)) {
+            nextChar(); // Assume 'id' is a single alphanumeric character for simplicity
+        }
+    } else {
+        error();
+    }
+}
+
+int main() {
+    printf("Enter an arithmetic expression: ");
+    scanf("%s", input);
+    i = 0;
+    nextChar();
+    E();
+    if (currentChar == '\0') {
+        printf("The string is successfully parsed.\n");
+    } else {
+        error();
+    }
+    return 0;
+}

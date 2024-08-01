@@ -1,0 +1,71 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX 10
+
+void eliminateLeftRecursion(char nonTerm, char prods[MAX][MAX], int n) {
+    int i, j;
+    char alpha[MAX][MAX], beta[MAX][MAX];
+    int alphaCount = 0, betaCount = 0;
+
+    for (i = 0; i < n; i++) {
+        if (prods[i][0] == nonTerm) {
+            strcpy(alpha[alphaCount], &prods[i][1]);
+            alphaCount++;
+        } else {
+            strcpy(beta[betaCount], prods[i]);
+            betaCount++;
+        }
+    }
+
+    if (alphaCount > 0) {
+        printf("%c -> ", nonTerm);
+        for (i = 0; i < betaCount; i++) {
+            printf("%s%c'", beta[i], nonTerm);
+            if (i < betaCount - 1) {
+                printf(" | ");
+            }
+        }
+        printf("\n");
+
+        printf("%c' -> ", nonTerm);
+        for (i = 0; i < alphaCount; i++) {
+            printf("%s%c'", alpha[i], nonTerm);
+            if (i < alphaCount - 1) {
+                printf(" | ");
+            }
+        }
+        printf(" | ε\n");
+    } else {
+        printf("%c -> ", nonTerm);
+        for (i = 0; i < betaCount; i++) {
+            printf("%s", beta[i]);
+            if (i < betaCount - 1) {
+                printf(" | ");
+            }
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    char nonTerm;
+    char prods[MAX][MAX];
+    int n, i;
+
+    printf("Enter the non-terminal: ");
+    scanf(" %c", &nonTerm);
+
+    printf("Enter the number of productions: ");
+    scanf("%d", &n);
+
+    printf("Enter the productions (e.g., A -> Aa | b as Aa and b):\n");
+    for (i = 0; i < n; i++) {
+        printf("Production %d: ", i + 1);
+        scanf("%s", prods[i]);
+    }
+
+    eliminateLeftRecursion(nonTerm, prods, n);
+
+    return 0;
+}

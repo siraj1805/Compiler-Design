@@ -1,0 +1,176 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+#include <math.h>
+
+#define MAX 100
+
+typedef struct {
+    char type; // 'N' for number, 'O' for operator
+    double value; // value if type is 'N'
+    char op; // operator if type is 'O'
+} Token;
+
+typedef struct {
+    Token tokens[MAX];
+    int top;
+} Stack;
+
+void push(Stack *s, Token t) {
+    if (s->top < MAX - 1) {
+        s->tokens[++s->top] = t;
+    }
+}
+
+Token pop(Stack *s) {
+    if (s->top >= 0) {
+        return s->tokens[s->top--];
+    }
+    Token t;
+    t.type = 'E'; // Error type
+    return t;
+}
+
+Token peek(Stack *s) {
+    if (s->top >= 0) {
+        return s->tokens[s->top];
+    }
+    Token t;
+    t.type = 'E'; // Error type
+    return t;
+}
+
+int precedence(char op) {
+    switch (op) {
+        case '+':
+        case '-':
+            return 1;
+        case '*':
+        case '/':
+            return 2;
+        case '^':
+            return 3;
+        default:
+            return 0;
+    }
+}
+
+double applyOperator(char op, double a, double b) {
+    switch (op) {
+        case '+':
+            return a + b;
+        case '-':
+            return a - b;
+        case '*':
+            return a * b;
+        case '/':
+            if (b != 0) return a / b;
+            printf("Error: Division by zero\n");
+            exit(1);
+        case '^':
+            return pow(a, b);
+        default:
+            printf("Error: Unknown operator %c\n", op);
+            exit(1);
+    }
+}
+
+int isOperator(char c) {
+    return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
+}
+
+int isNumber(char c) {
+    return isdigit(c) || c == '.';
+}
+
+void parseExpression(const char *expr, Token output[], int *size) {
+    Stack opStack;
+    opStack.top = -1;
+    *size = 0;
+    for (int i = 0; expr[i] != '\0'; i++) {
+        if (isspace(expr[i])) {
+            continue;
+        }
+        if (isNumber(expr[i])) {
+            double num = 0.0;
+            int decimal = 0;
+            while (isNumber(expr[i])) {
+                if (expr[i] == '.') {
+                    decimal = 1;
+                    i++;
+                    continue;
+                }
+                if (decimal) {
+                    num = num + (expr[i] - '0') / pow(10, decimal++);
+                } else {
+                    num = num * 10 + (expr[i] - '0');
+                }
+                i++;
+            }
+            i--;
+            output[*size].type = 'N';
+            output[*size].value = num;
+            (*size)++;
+        } else if (expr[i] == '(') {
+            Token t;
+            t.type = 'O';
+            t.op = '(';
+            push(&opStack, t);
+        } else if (expr[i] == ')') {
+            while (opStack.top != -1 && peek(&opStack).op != '(') {
+                output[*size] = pop(&opStack);
+                (*size)++;
+            }
+            pop(&opStack); // Remove '(' from stack
+        } else if (isOperator(expr[i])) {
+            while (opStack.top != -1 && precedence(peek(&opStack).op) >= precedence(expr[i])) {
+                output[*size] = pop(&opStack);
+                (*size)++;
+            }
+            Token t;
+            t.type = 'O';
+            t.op = expr[i];
+            push(&opStack, t);
+        }
+    }
+    while (opStack.top != -1) {
+        output[*size] = pop(&opStack);
+        (*size)++;
+    }
+}
+
+double evaluateRPN(Token tokens[], int size) {
+    Stack stack;
+    stack.top = -1;
+    for (int i = 0; i < size; i++) {
+        if (tokens[i].type == 'N') {
+            push(&stack, tokens[i]);
+        } else if (tokens[i].type == 'O') {
+            double b = pop(&stack).value;
+            double a = pop(&stack).value;
+            double result = applyOperator(tokens[i].op, a, b);
+            Token t;
+            t.type = 'N';
+            t.value = result;
+            push(&stack, t);
+        }
+    }
+    return pop(&stack).value;
+}
+
+int main() {
+    char expression[MAX];
+    printf("Enter an arithmetic expression: ");
+    fgets(expression, MAX, stdin);
+    expression[strcspn(expression, "\n")] = 0; // Remove trailing newline
+
+    Token tokens[MAX];
+    int size;
+    parseExpression(expression, tokens, &size);
+
+    double result = evaluateRPN(tokens, size);
+    printf("The result of the expression is: %.2f\n", result);
+
+    return 0;
+}

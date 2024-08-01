@@ -1,0 +1,133 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX 100
+
+// Structure to represent a three-address code (TAC) instruction
+typedef struct {
+    char result[10];
+    char arg1[10];
+    char op[2];
+    char arg2[10];
+} TAC;
+
+// Structure to hold a common subexpression
+typedef struct {
+    char expr[MAX];
+    char tempVar[10];
+} Subexpression;
+
+TAC tac[MAX];
+Subexpression commonSubexpr[MAX];
+int tacCount = 0;
+int subexprCount = 0;
+
+// Function to add a TAC instruction
+void generateTAC(char* result, char* arg1, char* op, char* arg2) {
+    strcpy(tac[tacCount].result, result);
+    strcpy(tac[tacCount].arg1, arg1);
+    strcpy(tac[tacCount].op, op);
+    strcpy(tac[tacCount].arg2, arg2);
+    tacCount++;
+}
+
+// Function to add a common subexpression
+void addCommonSubexpr(char* expr) {
+    strcpy(commonSubexpr[subexprCount].expr, expr);
+    sprintf(commonSubexpr[subexprCount].tempVar, "t%d", subexprCount);
+    subexprCount++;
+}
+
+// Function to find if an expression is a common subexpression
+int isCommonSubexpr(char* expr) {
+    for (int i = 0; i < subexprCount; i++) {
+        if (strcmp(commonSubexpr[i].expr, expr) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Function to perform common subexpression elimination
+void optimizeCode() {
+    for (int i = 0; i < tacCount; i++) {
+        int index = isCommonSubexpr(tac[i].arg1);
+        if (index != -1) {
+            strcpy(tac[i].arg1, commonSubexpr[index].tempVar);
+        }
+        index = isCommonSubexpr(tac[i].arg2);
+        if (index != -1) {
+            strcpy(tac[i].arg2, commonSubexpr[index].tempVar);
+        }
+    }
+}
+
+// Function to print the intermediate code (TAC)
+void printTAC() {
+    printf("Intermediate Code (TAC):\n");
+    for (int i = 0; i < tacCount; i++) {
+        printf("%s = %s %s %s\n", tac[i].result, tac[i].arg1, tac[i].op, tac[i].arg2);
+    }
+}
+
+// Function to generate assembly code from TAC
+void generateAssembly() {
+    printf("\nAssembly Code:\n");
+    for (int i = 0; i < tacCount; i++) {
+        if (strcmp(tac[i].op, "+") == 0) {
+            printf("MOV %s, %s\n", tac[i].result, tac[i].arg1);
+            printf("ADD %s\n", tac[i].arg2);
+        } else if (strcmp(tac[i].op, "-") == 0) {
+            printf("MOV %s, %s\n", tac[i].result, tac[i].arg1);
+            printf("SUB %s\n", tac[i].arg2);
+        } else if (strcmp(tac[i].op, "*") == 0) {
+            printf("MOV %s, %s\n", tac[i].result, tac[i].arg1);
+            printf("MUL %s\n", tac[i].arg2);
+        } else if (strcmp(tac[i].op, "/") == 0) {
+            printf("MOV %s, %s\n", tac[i].result, tac[i].arg1);
+            printf("DIV %s\n", tac[i].arg2);
+        }
+    }
+}
+
+int main() {
+    // Example input for demonstration
+    char* expressions[] = {
+        "a = b + c",
+        "d = e * f",
+        "x = a + d",
+        "y = d - a",
+        "z = x + y"
+    };
+    int exprCount = sizeof(expressions) / sizeof(expressions[0]);
+
+    // Process expressions and generate TAC
+    for (int i = 0; i < exprCount; i++) {
+        char result[10], arg1[10], op[2], arg2[10];
+        sscanf(expressions[i], "%s = %s %s %s", result, arg1, op, arg2);
+
+        int index = isCommonSubexpr(arg1);
+        if (index == -1) {
+            addCommonSubexpr(arg1);
+        }
+        index = isCommonSubexpr(arg2);
+        if (index == -1) {
+            addCommonSubexpr(arg2);
+        }
+
+        generateTAC(result, arg1, op, arg2);
+    }
+
+    // Perform optimization
+    optimizeCode();
+
+    // Print TAC
+    printTAC();
+
+    // Generate and print assembly code
+    generateAssembly();
+
+    return 0;
+}

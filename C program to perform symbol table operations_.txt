@@ -1,0 +1,102 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX 100
+
+typedef struct {
+    char name[50];
+    char type[10];
+    int size;
+    char scope[10];
+} Symbol;
+
+Symbol symbolTable[MAX];
+int count = 0;
+
+void insert(char *name, char *type, int size, char *scope) {
+    if (count < MAX) {
+        strcpy(symbolTable[count].name, name);
+        strcpy(symbolTable[count].type, type);
+        symbolTable[count].size = size;
+        strcpy(symbolTable[count].scope, scope);
+        count++;
+        printf("Symbol inserted successfully.\n");
+    } else {
+        printf("Symbol Table is full.\n");
+    }
+}
+
+int search(char *name) {
+    for (int i = 0; i < count; i++) {
+        if (strcmp(symbolTable[i].name, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void display() {
+    printf("\nSymbol Table:\n");
+    printf("------------------------------------------------\n");
+    printf("| %-15s | %-10s | %-5s | %-10s |\n", "Name", "Type", "Size", "Scope");
+    printf("------------------------------------------------\n");
+    for (int i = 0; i < count; i++) {
+        printf("| %-15s | %-10s | %-5d | %-10s |\n", symbolTable[i].name, symbolTable[i].type, symbolTable[i].size, symbolTable[i].scope);
+    }
+    printf("------------------------------------------------\n");
+}
+
+int main() {
+    int choice;
+    char name[50], type[10], scope[10];
+    int size;
+
+    while (1) {
+        printf("\nSymbol Table Operations:\n");
+        printf("1. Insert\n");
+        printf("2. Search\n");
+        printf("3. Display\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                printf("Enter name: ");
+                scanf("%s", name);
+                printf("Enter type: ");
+                scanf("%s", type);
+                printf("Enter size: ");
+                scanf("%d", &size);
+                printf("Enter scope: ");
+                scanf("%s", scope);
+                insert(name, type, size, scope);
+                break;
+
+            case 2:
+                printf("Enter name to search: ");
+                scanf("%s", name);
+                int index = search(name);
+                if (index != -1) {
+                    printf("Symbol found at index %d.\n", index);
+                } else {
+                    printf("Symbol not found.\n");
+                }
+                break;
+
+            case 3:
+                display();
+                break;
+
+            case 4:
+                exit(0);
+
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    }
+
+    return 0;
+}
+

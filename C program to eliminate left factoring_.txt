@@ -1,0 +1,81 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX 10
+
+void eliminateLeftFactoring(char nonTerm, char prods[MAX][MAX], int n) {
+    int i, j, k, maxPrefixLen;
+    char prefix[MAX];
+    char newProds[MAX][MAX];
+    int newProdsCount = 0;
+
+    // Find the longest common prefix
+    strcpy(prefix, prods[0]);
+    maxPrefixLen = strlen(prefix);
+    for (i = 1; i < n; i++) {
+        for (j = 0; j < maxPrefixLen; j++) {
+            if (prefix[j] != prods[i][j]) {
+                break;
+            }
+        }
+        maxPrefixLen = j;
+    }
+    strncpy(prefix, prods[0], maxPrefixLen);
+    prefix[maxPrefixLen] = '\0';
+
+    // If there's no common prefix, nothing to factor
+    if (maxPrefixLen == 0) {
+        printf("%c -> ", nonTerm);
+        for (i = 0; i < n; i++) {
+            printf("%s", prods[i]);
+            if (i < n - 1) {
+                printf(" | ");
+            }
+        }
+        printf("\n");
+        return;
+    }
+
+    // Create the new productions
+    printf("%c -> %s%c'\n", nonTerm, prefix, nonTerm);
+    for (i = 0; i < n; i++) {
+        if (strlen(prods[i]) == maxPrefixLen) {
+            sprintf(newProds[newProdsCount++], "ε");
+        } else {
+            strcpy(newProds[newProdsCount], &prods[i][maxPrefixLen]);
+            newProdsCount++;
+        }
+    }
+
+    // Print the new productions
+    printf("%c' -> ", nonTerm);
+    for (i = 0; i < newProdsCount; i++) {
+        printf("%s", newProds[i]);
+        if (i < newProdsCount - 1) {
+            printf(" | ");
+        }
+    }
+    printf("\n");
+}
+
+int main() {
+    char nonTerm;
+    char prods[MAX][MAX];
+    int n, i;
+
+    printf("Enter the non-terminal: ");
+    scanf(" %c", &nonTerm);
+
+    printf("Enter the number of productions: ");
+    scanf("%d", &n);
+
+    printf("Enter the productions (e.g., A -> ab | ac as ab and ac):\n");
+    for (i = 0; i < n; i++) {
+        printf("Production %d: ", i + 1);
+        scanf("%s", prods[i]);
+    }
+
+    eliminateLeftFactoring(nonTerm, prods, n);
+
+    return 0;
+}

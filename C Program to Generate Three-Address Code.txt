@@ -1,0 +1,109 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+
+#define MAX 100
+
+typedef struct {
+    char result[10];
+    char arg1[10];
+    char op[2];
+    char arg2[10];
+} TAC;
+
+TAC tac[MAX];
+int tempCount = 0;
+int tacCount = 0;
+
+void generateTAC(char* result, char* arg1, char* op, char* arg2) {
+    strcpy(tac[tacCount].result, result);
+    strcpy(tac[tacCount].arg1, arg1);
+    strcpy(tac[tacCount].op, op);
+    strcpy(tac[tacCount].arg2, arg2);
+    tacCount++;
+}
+
+char* newTemp() {
+    static char temp[10];
+    sprintf(temp, "t%d", tempCount++);
+    return temp;
+}
+
+void displayTAC() {
+    for (int i = 0; i < tacCount; i++) {
+        printf("%s = %s %s %s\n", tac[i].result, tac[i].arg1, tac[i].op, tac[i].arg2);
+    }
+}
+
+void parseExpression(char* expr) {
+    char operators[MAX];
+    char operands[MAX][10];
+    int opTop = -1, opndTop = -1;
+    char token[10];
+    int i = 0, j = 0;
+
+    while (expr[i] != '\0') {
+        if (isspace(expr[i])) {
+            i++;
+            continue;
+        }
+
+        if (isalnum(expr[i])) {
+            j = 0;
+            while (isalnum(expr[i])) {
+                token[j++] = expr[i++];
+            }
+            token[j] = '\0';
+            strcpy(operands[++opndTop], token);
+        } else if (expr[i] == '(') {
+            operators[++opTop] = expr[i++];
+        } else if (expr[i] == ')') {
+            while (operators[opTop] != '(') {
+                char op[2] = {operators[opTop--], '\0'};
+                char* arg2 = operands[opndTop--];
+                char* arg1 = operands[opndTop--];
+                char* result = newTemp();
+                generateTAC(result, arg1, op, arg2);
+                strcpy(operands[++opndTop], result);
+            }
+            opTop--; // pop '('
+            i++;
+        } else if (strchr("+-*/", expr[i])) {
+            while (opTop != -1 && strchr("+-*/", operators[opTop])) {
+                char op[2] = {operators[opTop--], '\0'};
+                char* arg2 = operands[opndTop--];
+                char* arg1 = operands[opndTop--];
+                char* result = newTemp();
+                generateTAC(result, arg1, op, arg2);
+                strcpy(operands[++opndTop], result);
+            }
+            operators[++opTop] = expr[i++];
+        } else {
+            i++;
+        }
+    }
+
+    while (opTop != -1) {
+        char op[2] = {operators[opTop--], '\0'};
+        char* arg2 = operands[opndTop--];
+        char* arg1 = operands[opndTop--];
+        char* result = newTemp();
+        generateTAC(result, arg1, op, arg2);
+        strcpy(operands[++opndTop], result);
+    }
+}
+
+int main() {
+    char expression[MAX];
+    printf("Enter an arithmetic expression: ");
+    fgets(expression, MAX, stdin);
+    expression[strcspn(expression, "\n")] = 0; // Remove trailing newline
+
+    parseExpression(expression);
+
+    printf("Three-Address Code:\n");
+    displayTAC();
+
+    return 0;
+}
